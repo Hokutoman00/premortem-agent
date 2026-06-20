@@ -72,8 +72,16 @@ class DashScopeAdapter(QwenClient):
         import dashscope
         from dashscope import MultiModalConversation
         from pathlib import Path
+        from urllib.parse import urlsplit
 
         dashscope.api_key = self.config.dashscope_api_key
+        # The native dashscope SDK defaults to the China region; an international
+        # (dashscope-intl) key is rejected there with "Invalid API-key". Point the SDK's
+        # base at the SAME region as the configured OpenAI-compatible URL by swapping the
+        # compatible-mode path for the native /api/v1 path on the same host.
+        host = urlsplit(self.config.dashscope_base_url).netloc
+        if host:
+            dashscope.base_http_api_url = f"https://{host}/api/v1"
         if "://" in image_ref:
             image_field = image_ref
         else:
