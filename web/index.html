@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PreMortem — prove the plan wrong before it pays</title>
+<style>
+  :root {
+    --bg: #0e0f11;
+    --panel: #16181c;
+    --line: #262a30;
+    --ink: #e7e9ec;
+    --mut: #8b929c;          /* >=4.5:1 on --bg */
+    --accent: #d9a441;        /* single accent (amber) */
+    --proceed: #4f9d69;
+    --block: #c2453e;
+    --escalate: #c8923a;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--mono); font-size: 14px; line-height: 1.55;
+  }
+  header {
+    padding: 28px 32px 20px; border-bottom: 1px solid var(--line);
+  }
+  h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.2px; }
+  h1 .mark { color: var(--accent); }
+  header p { margin: 6px 0 0; color: var(--mut); max-width: 70ch; }
+  main { display: grid; grid-template-columns: 1.55fr 1fr; gap: 0; }
+  @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
+  section { padding: 24px 32px; }
+  section + section { border-left: 1px solid var(--line); }
+  @media (max-width: 880px) { section + section { border-left: none; border-top: 1px solid var(--line); } }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+       color: var(--mut); margin: 0 0 14px; font-weight: 600; }
+
+  .scenarios { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  button.s {
+    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 3px; padding: 9px 14px; font-family: var(--mono); font-size: 13px;
+    cursor: pointer; transition: border-color .12s, background .12s;
+  }
+  button.s:hover { border-color: var(--accent); }
+  button.s.active { border-color: var(--accent); background: #1c1d18; }
+
+  .card { background: var(--panel); border: 1px solid var(--line);
+          border-radius: 4px; padding: 18px; min-height: 120px; }
+  .verdict { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .badge { font-weight: 700; font-size: 16px; letter-spacing: 0.5px; }
+  .badge.PROCEED { color: var(--proceed); }
+  .badge.BLOCK   { color: var(--block); }
+  .badge.ESCALATE{ color: var(--escalate); }
+  .pay { font-size: 12px; color: var(--mut); border: 1px solid var(--line);
+         border-radius: 999px; padding: 2px 10px; }
+  .pay.PAID    { color: var(--proceed); border-color: #2e4a39; }
+  .pay.STOPPED { color: var(--block); border-color: #4a2e2c; }
+  .meta { color: var(--mut); font-size: 12.5px; margin: 2px 0 16px; }
+
+  .group { margin-top: 14px; }
+  .group h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+              color: var(--mut); margin: 0 0 7px; font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 5px 0 5px 16px; position: relative; border-bottom: 1px dashed var(--line); }
+  li:last-child { border-bottom: none; }
+  li::before { content: ""; position: absolute; left: 0; top: 12px;
+               width: 6px; height: 6px; border-radius: 1px; }
+  li.confirmed::before { background: var(--block); }
+  li.cleared::before   { background: var(--proceed); }
+  li.escal::before     { background: var(--escalate); }
+  li.resid::before     { background: var(--mut); }
+  li .mode { color: var(--ink); }
+  li .ev { color: var(--mut); font-size: 12px; }
+  .count { color: var(--mut); font-weight: 400; }
+
+  .mem { font-size: 12.5px; }
+  .mem .row { display: grid; grid-template-columns: 1fr auto; gap: 8px;
+              padding: 7px 0; border-bottom: 1px dashed var(--line); }
+  .mem .fm { color: var(--ink); }
+  .mem .lbl { color: var(--accent); font-size: 11px; }
+  .mem .ev2 { color: var(--mut); font-size: 11.5px; grid-column: 1 / -1; margin-top: 2px; }
+  .learn { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .learn p { color: var(--mut); font-size: 12.5px; margin: 0 0 10px; }
+  .learn button {
+    background: var(--accent); color: #14150f; border: none; border-radius: 3px;
+    padding: 9px 14px; font-family: var(--mono); font-size: 13px; font-weight: 600;
+    cursor: pointer;
+  }
+  .learn button:disabled { opacity: .45; cursor: default; }
+  .empty { color: var(--mut); }
+  code { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="mark">Pre</span>Mortem — prove the plan wrong before it pays</h1>
+  <p>An accounts-payable autopilot. Before an irreversible payment it enumerates how the
+     plan could be wrong, runs read-only probes to try to <em>confirm</em> those failures,
+     and pays only when it cannot break its own plan. Every miss is remembered, so the next
+     pre-mortem is sharper.</p>
+</header>
+<main>
+  <section>
+    <h2>Run a payment through the gate</h2>
+    <div class="scenarios" id="scenarios"></div>
+    <div class="card" id="result">
+      <span class="empty">Pick a scenario to see the pre-mortem verdict.</span>
+    </div>
+  </section>
+  <section>
+    <h2>Failure memory <span class="count" id="memcount"></span></h2>
+    <div class="mem" id="memory"><span class="empty">— nothing learned yet —</span></div>
+    <div class="learn">
+      <p>The learning loop: teach the agent that an approved, in-distribution payment to
+         <code>V-1007</code> later turned out undelivered. Re-run <code>safe</code> after —
+         the same fingerprint now escalates instead of paying.</p>
+      <button id="teach">Teach override → goods_not_received</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const API = location.origin.startsWith("http") && location.port ? location.origin : "http://127.0.0.1:8000";
+const $ = (id) => document.getElementById(id);
+// Scenario buttons are fetched from /demo/scenarios so the UI can never drift out of sync
+// with the backend's scenario set. This static list is only a fallback if the API is down.
+const SCN_FALLBACK = ["safe", "bank_swap", "tampered_img", "new_vendor", "doc_mismatch"];
+
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function renderResult(name, data) {
+  const d = data.decision, e = data.explain;
+  const v = e.verdict;
+  const paid = d.executed ? "PAID" : "STOPPED";
+  const confirmed = (v === "BLOCK" ? d.verdict.confirmed : (d.verdict ? d.verdict.confirmed : [])) || [];
+  const li = (cls, mode, ev) =>
+    `<li class="${cls}"><span class="mode">${esc(mode)}</span>${ev ? ` <span class="ev">— ${esc(ev)}</span>` : ""}</li>`;
+  let html = `
+    <div class="verdict">
+      <span class="badge ${v}">${v}</span>
+      <span class="pay ${paid}">${paid}</span>
+    </div>
+    <div class="meta">${esc(d.reason)} · reversibility: ${esc(d.reversibility)} ·
+      ${e.enumerated.length} modes enumerated · ${e.attempted} probes attempted</div>`;
+
+  if (confirmed.length) {
+    html += `<div class="group"><h3>Confirmed danger → block</h3><ul>` +
+      confirmed.map(c => li("confirmed", c.mode, c.evidence)).join("") + `</ul></div>`;
+  }
+  if (e.unfalsifiable && e.unfalsifiable.length) {
+    html += `<div class="group"><h3>Could not falsify → escalate</h3><ul>` +
+      e.unfalsifiable.map(m => li("escal", m, "")).join("") + `</ul></div>`;
+  }
+  html += `<div class="group"><h3>Cleared <span class="count">${e.cleared.length}</span></h3><ul>` +
+    (e.cleared.length ? e.cleared.map(m => li("cleared", m, "")).join("")
+                      : `<li class="empty">—</li>`) + `</ul></div>`;
+  if (e.residual && e.residual.length) {
+    html += `<div class="group"><h3>Residual (advisory, non-blocking)</h3><ul>` +
+      e.residual.map(m => li("resid", m, "")).join("") + `</ul></div>`;
+  }
+  $("result").innerHTML = html;
+}
+
+async function runScenario(name) {
+  document.querySelectorAll("button.s").forEach(b =>
+    b.classList.toggle("active", b.dataset.name === name));
+  $("result").innerHTML = `<span class="empty">running pre-mortem…</span>`;
+  try {
+    const r = await fetch(`${API}/demo/scenario/${name}`);
+    renderResult(name, await r.json());
+    refreshMemory();
+  } catch (err) {
+    $("result").innerHTML = `<span class="empty">API unreachable at ${esc(API)} —
+      start it with <code>uvicorn premortem.api:app</code>. (${esc(err.message)})</span>`;
+  }
+}
+
+async function refreshMemory() {
+  try {
+    const r = await fetch(`${API}/memory`);
+    const m = await r.json();
+    $("memcount").textContent = m.count ? `${m.count} recorded` : "";
+    if (!m.rows || !m.rows.length) {
+      $("memory").innerHTML = `<span class="empty">— nothing learned yet —</span>`;
+      return;
+    }
+    $("memory").innerHTML = m.rows.slice().reverse().map(row => `
+      <div class="row">
+        <span class="fm">${esc(row.failure_mode)}</span>
+        <span class="lbl">${esc(row.label)}</span>
+        <span class="ev2">${esc(row.evidence)}</span>
+      </div>`).join("");
+  } catch { /* memory panel stays as-is if API is down */ }
+}
+
+async function teach() {
+  $("teach").disabled = true;
+  try {
+    await fetch(`${API}/learn`, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        invoice_id: "INV-2026-0501", vendor_id: "V-1007", amount: 5120.0,
+        failure_mode: "goods_not_received",
+        evidence: "支払済だが納品実績なし（人間が事後発見）",
+        label: "human_override",
+      }),
+    });
+    await refreshMemory();
+    await runScenario("safe");
+  } finally {
+    $("teach").disabled = false;
+  }
+}
+
+function renderScenarioButtons(names) {
+  $("scenarios").innerHTML = names.map(n =>
+    `<button class="s" data-name="${esc(n)}">${esc(n)}</button>`).join("");
+  document.querySelectorAll("button.s").forEach(b =>
+    b.addEventListener("click", () => runScenario(b.dataset.name)));
+}
+
+async function init() {
+  let names = SCN_FALLBACK;
+  try {
+    const r = await fetch(`${API}/demo/scenarios`);
+    const j = await r.json();
+    if (j.scenarios && j.scenarios.length) names = j.scenarios;
+  } catch { /* API down -> use the fallback list */ }
+  renderScenarioButtons(names);
+  $("teach").addEventListener("click", teach);
+  refreshMemory();
+}
+init();
+</script>
+</body>
+</html>

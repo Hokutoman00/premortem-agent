@@ -1,0 +1,17 @@
+{
+  "_comment": "Known Accounts-Payable failure/fraud archetypes. Static cold-start seed (design §2): every payment is enumerated against these regardless of what the LLM imagines. Each maps to a read-only probe that would expose it if real. severity drives ordering.",
+  "version": 1,
+  "modes": [
+    {"id": "bank_changed", "desc": "振込口座が直近の支払と異なる（口座差し替え詐欺）", "probe": "bank_detail_diff", "severity": "catastrophic"},
+    {"id": "new_payee_first_payment", "desc": "登録間もない/初回支払の新規ペイ先", "probe": "vendor_age", "severity": "high"},
+    {"id": "duplicate_invoice", "desc": "同一/近似の請求書番号・金額が既に支払済み", "probe": "duplicate_check", "severity": "high"},
+    {"id": "amount_anomaly", "desc": "金額がベンダー履歴の分布から大きく乖離", "probe": "amount_anomaly", "severity": "high"},
+    {"id": "unapproved_vendor", "desc": "承認済みベンダーリストに無い", "probe": "approval_list", "severity": "catastrophic"},
+    {"id": "round_number_anomaly", "desc": "不自然な丸い金額（手入力・水増しの兆候）", "probe": "round_number", "severity": "medium"},
+    {"id": "bank_country_mismatch", "desc": "口座の所在国がベンダー登記国と不一致", "probe": "bank_country_mismatch", "severity": "high"},
+    {"id": "invoice_image_mismatch", "desc": "請求書画像の記載（口座/金額）が支払指示と不一致", "probe": "image_consistency", "severity": "catastrophic"},
+    {"id": "po_mismatch", "desc": "発注書(PO)と金額/品目が一致しない", "probe": "po_match", "severity": "high"},
+    {"id": "tax_id_mismatch", "desc": "ベンダー税ID/登記番号が登録値と不一致", "probe": "tax_id_check", "severity": "high"},
+    {"id": "currency_mismatch", "desc": "請求書通貨と支払指示通貨が一致しない", "probe": "currency_check", "severity": "medium"}
+  ]
+}

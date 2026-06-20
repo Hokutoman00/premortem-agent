@@ -1,0 +1,27 @@
+PreMortem — MCP client↔server transcript (real JSON-RPC round-trip over stdio)
+Regenerate: python scripts/mcp_client_demo.py --save
+Creds-free; grounded on the deterministic demo store.
+==============================================================================
+
+$ python scripts/mcp_client_demo.py
+  (spawns `python -m premortem.mcp_server` and talks MCP over stdio)
+
+→ initialize     ← server: premortem-probes (MCP 2025-11-25)
+→ list_tools     ← 11 read-only probe tools: amount_anomaly, approval_list, bank_country_mismatch, bank_detail_diff, currency_check, duplicate_check, image_consistency, po_match, round_number, tax_id_check, vendor_age
+
+→ call_tool image_consistency
+    args   : {'vendor_id': 'V-1007', 'iban': 'DE89370400440532013000', 'iban_on_doc': 'GB44BARC20038512345678'}
+    note   : vision leg — the tampered-invoice IBAN the structured plan hides
+    ← confirmed=True  [CONFIRMED]  probe_ran=True  evidence='請求書画像の口座 GB44BARC20038512345678 != 支払指示 DE89370400440532013000'
+
+→ call_tool bank_country_mismatch
+    args   : {'vendor_id': 'V-1007', 'iban': 'GB44BARC20038512345678'}
+    note   : structured leg — GB account on a DE-registered vendor
+    ← confirmed=True  [CONFIRMED]  probe_ran=True  evidence='口座国 GB != 登記国 DE'
+
+→ call_tool approval_list
+    args   : {'vendor_id': 'V-1007'}
+    note   : structured leg — approved vendor clears (shows a CLEAR, not just CONFIRMs)
+    ← confirmed=False [clear]  probe_ran=True  evidence='承認済みベンダー'
+
+Every call above is read-only (invariant I2) and grounded on the deterministic demo store — so this transcript reproduces byte-for-byte offline.

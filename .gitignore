@@ -1,0 +1,17 @@
+# runtime artifacts
+*.sqlite3
+*.sqlite3-journal
+premortem_memory.sqlite3
+
+# env / secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/

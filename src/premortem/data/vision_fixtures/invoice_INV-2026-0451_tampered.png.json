@@ -1,0 +1,9 @@
+{
+  "_what_this_is": "Ground-truth the VL model extracts from the shipped PNG of the same name. The mock READS this sidecar instead of decoding the PNG, so the engine's vision->image_consistency path is reproducible offline AND identical to the live qwen-vl-max read of the real image. Regenerate both with make_demo_images.py.",
+  "iban_on_doc": "GB44BARC20038512345678",
+  "amount_on_doc": "5,300.00",
+  "vendor_on_doc": "Acme Supplies Ltd",
+  "tax_id_on_doc": "DE811234567",
+  "po_number_on_doc": "PO-2026-0451",
+  "po_amount": "5300.00"
+}

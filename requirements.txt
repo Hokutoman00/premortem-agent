@@ -1,0 +1,11 @@
+# Runtime (creds-free demo + tests run on these alone)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+httpx>=0.27
+python-dotenv>=1.0
+
+# Real Qwen Cloud execution (install when you have a DashScope key):
+#   pip install dashscope openai
+# MCP server transport (optional):
+#   pip install mcp
