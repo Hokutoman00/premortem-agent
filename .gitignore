@@ -6,6 +6,10 @@ premortem_memory.sqlite3
 # env / secrets
 .env
 
+# internal ops docs — NEVER publish (submission strategy / runbook)
+docs/SUBMISSION-DRAFT.md
+docs/SUBMIT-RUNBOOK.md
+
 # python
 __pycache__/
 *.pyc
