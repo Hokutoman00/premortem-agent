@@ -17,7 +17,7 @@ flowchart LR
       UI["web/index.html<br/>single-file demo UI"]
     end
 
-    subgraph Host ["Backend host (runs anywhere)"]
+    subgraph Host ["Backend host · thin local API"]
       API["FastAPI · premortem.api:app<br/>PreMortem falsification engine + 11 read-only probes"]
       DB[("SQLite<br/>append-only failure memory")]
       MCP["MCP probe server<br/>(stdio) · same 11 probes"]
