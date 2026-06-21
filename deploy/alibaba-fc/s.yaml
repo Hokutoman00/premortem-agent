@@ -1,0 +1,52 @@
+# Serverless Devs (s) spec — deploy the PreMortem FastAPI backend as an
+# Alibaba Cloud Function Compute 3.0 custom-container web function in Singapore.
+#
+#   npm i -g @serverless-devs/s
+#   s config add        # provide the AccessKey (AK/SK) for the intl account
+#   docker build -f deploy/alibaba-fc/Dockerfile -t <acr-image> .   # from repo root
+#   docker push <acr-image>
+#   s deploy
+#
+# The HTTP trigger then serves /health, /demo/*, /assess, /learn, /memory publicly.
+edition: 3.0.0
+name: premortem
+access: default
+
+vars:
+  region: ap-southeast-1        # Singapore — NOT a Chinese mainland region (no KYC needed)
+
+resources:
+  premortem-api:
+    component: fc3
+    props:
+      region: ${vars.region}
+      functionName: premortem-api
+      description: PreMortem — AP autopilot backend (FastAPI) on Function Compute
+      runtime: custom-container
+      customContainerConfig:
+        # Push the image built from deploy/alibaba-fc/Dockerfile to your ACR namespace
+        # (registry-intl.${vars.region}.aliyuncs.com/<namespace>/premortem-api:latest).
+        image: registry-intl.ap-southeast-1.aliyuncs.com/REPLACE_NAMESPACE/premortem-api:latest
+        port: 9000
+      cpu: 0.35
+      memorySize: 512
+      diskSize: 512
+      timeout: 60
+      instanceConcurrency: 5
+      environmentVariables:
+        # Default is the creds-free mock provider so the hosted backend runs with no secret.
+        # To run live Qwen Cloud ON the host, set these as FC env vars at deploy time
+        # (console or `s` --env) — NEVER commit the key:
+        #   PREMORTEM_LLM: dashscope
+        #   DASHSCOPE_API_KEY: <from ~/.credentials/qwen-cloud.env, set in console>
+        #   DASHSCOPE_BASE_URL: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+        PREMORTEM_LLM: mock
+        PREMORTEM_MEMORY_DB: /tmp/premortem_memory.sqlite3
+      triggers:
+        - triggerName: httpTrigger
+          triggerType: http
+          triggerConfig:
+            authType: anonymous
+            methods:
+              - GET
+              - POST
