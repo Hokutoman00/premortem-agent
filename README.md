@@ -34,7 +34,7 @@ its own plan wrong first.* `tampered_img` is the check **a text-only model canno
 Two more things you can run in a minute:
 
 ```bash
-python -m pytest -q                  # 101 tests, all on the mock, in-memory SQLite
+python -m pytest -q                  # 101 mock tests creds-free (+2 live qwen-vl-max = 103 with a key)
 python scripts/mcp_client_demo.py    # a real MCP client calls the probe tools over stdio
 ```
 
@@ -89,7 +89,8 @@ pip install -e .            # or: pip install -r requirements.txt
 python scripts/run_demo.py  # walks all 5 scenarios + the day1→day2 learning loop
 ```
 
-Run the test suite (101 tests, all on the mock provider, in-memory SQLite):
+Run the test suite — 101 tests run creds-free on the mock provider (in-memory SQLite), plus 2
+live `qwen-vl-max` tests that un-skip with a `DASHSCOPE_API_KEY` (**103 total**):
 
 ```bash
 pip install -e ".[dev]"
@@ -213,7 +214,7 @@ src/premortem/
   data/catastrophe_registry.json   11 catastrophe modes + severities
 web/index.html         single-file demo UI
 scripts/run_demo.py    offline, creds-free end-to-end demo
-tests/                 101 tests, mock provider, in-memory DB
+tests/                 103 tests (101 mock, creds-free · 2 live qwen-vl-max)
 ```
 
 Deploy guide: [docs/DEPLOY-ALIBABA.md](docs/DEPLOY-ALIBABA.md) ·
