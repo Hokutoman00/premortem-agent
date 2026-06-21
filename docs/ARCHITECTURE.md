@@ -3,6 +3,39 @@
 PreMortem is a **falsification engine wrapped in a two-regime policy**. The whole design
 exists to make one decision trustworthy: *should this irreversible action execute?*
 
+## 0. System architecture (deployment view)
+
+How the pieces connect — frontend, backend, datastore, and the **Qwen Cloud (Alibaba Cloud)**
+model legs. The model inference (`qwen-max` + `qwen-vl-max`) is the part that runs on Alibaba
+Cloud; the deployment-proof code file the rules ask for is
+[`llm/dashscope_adapter.py`](../src/premortem/llm/dashscope_adapter.py) (live transcript:
+[live-vl-evidence.md](live-vl-evidence.md)).
+
+```mermaid
+flowchart LR
+    subgraph Client [Frontend]
+      UI["web/index.html<br/>single-file demo UI"]
+    end
+
+    subgraph Host ["Backend host (runs anywhere)"]
+      API["FastAPI · premortem.api:app<br/>PreMortem falsification engine + 11 read-only probes"]
+      DB[("SQLite<br/>append-only failure memory")]
+      MCP["MCP probe server<br/>(stdio) · same 11 probes"]
+      API --- DB
+      API --- MCP
+    end
+
+    subgraph Alibaba ["Alibaba Cloud · Qwen Cloud / DashScope"]
+      QMAX["qwen-max<br/>reasoning · failure-mode enumeration (N=5 self-consistency)"]
+      QVL["qwen-vl-max<br/>invoice-image perception"]
+    end
+
+    UI -->|"HTTP /assess · /demo · /learn"| API
+    API -->|"OpenAI-compatible endpoint"| QMAX
+    API -->|"MultiModalConversation"| QVL
+    QVL -. "iban_on_doc cross-check" .-> API
+```
+
 ## 1. Control flow
 
 ```mermaid

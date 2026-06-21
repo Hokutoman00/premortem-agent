@@ -1,9 +1,17 @@
-# Deploying PreMortem on Alibaba Cloud
+# Deploying PreMortem on Alibaba Cloud — OPTIONAL
 
-The hackathon requires the backend to **run on Alibaba Cloud against Qwen Cloud**, shown in a
-short screen recording. This is the turn-key runbook. Two supported targets: **ECS** (a normal
-VM, simplest to record) and **Function Compute** (serverless). Both serve the same
-`premortem.api:app` FastAPI surface.
+> **What the rules actually require (verified 2026-06-21 against the official rules page).** The
+> binding "Proof of Alibaba Cloud Deployment" is satisfied by **a link to a code file in the repo
+> that demonstrates use of Alibaba Cloud services and APIs** — for PreMortem that is
+> [`src/premortem/llm/dashscope_adapter.py`](../src/premortem/llm/dashscope_adapter.py) (Qwen Cloud /
+> DashScope **is** an Alibaba Cloud service), backed by the live transcript
+> [live-vl-evidence.md](live-vl-evidence.md). A live ECS/FC instance and a screen recording of it
+> are **NOT required**. The $0 submission path does not stand up any instance. This runbook is kept
+> only as an OPTIONAL hardening path — it costs money / a payment card and buys **no** rules-pass.
+
+This is the turn-key runbook **if you still choose** to stand up a live instance. Two supported
+targets: **ECS** (a normal VM, simplest to record) and **Function Compute** (serverless). Both
+serve the same `premortem.api:app` FastAPI surface.
 
 > **Credentials gate.** Everything below requires a Qwen Cloud / Alibaba Cloud account and a
 > DashScope API key. The code, tests, and demo are 100% reproducible **without** them on the
